@@ -7,6 +7,28 @@
     <title>rayban-clone</title>
   </head>
   <body>
+    <!-- SVG water filter — baseFrequency animé en continu -->
+    <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+      <defs>
+        <filter id="water" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence type="fractalNoise" numOctaves="4" result="noise">
+            <animate
+              attributeName="baseFrequency"
+              dur="9s"
+              values="0.012 0.016;0.018 0.024;0.012 0.016"
+              repeatCount="indefinite"
+            />
+          </feTurbulence>
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="0"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </defs>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
