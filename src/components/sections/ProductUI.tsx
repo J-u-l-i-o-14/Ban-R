@@ -28,8 +28,13 @@ export default function ProductUI() {
       {/* Dynamic background */}
       <div
         ref={bgRef}
-        className="absolute inset-0 bg-cover bg-center transition-opacity"
-        style={{ backgroundImage: `url('${COLORS[color]}')` }}
+        className="absolute inset-0 transition-opacity"
+        style={{
+          backgroundImage: `url('${COLORS[color]}')`,
+          backgroundSize: 'contain',
+          backgroundPosition: '60% 10%',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
       {/* Dark gradient */}
       <div className="absolute inset-0 z-[2]"

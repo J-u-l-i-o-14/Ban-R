@@ -126,8 +126,13 @@ export default function ScrollScene({
           >
             {/* Background image */}
             <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url('${section.image}')` }}
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url('${section.image}')`,
+                backgroundSize: ('bgSize' in section ? section.bgSize : 'cover') as string,
+                backgroundPosition: ('bgPos' in section ? section.bgPos : 'center') as string,
+                backgroundRepeat: 'no-repeat',
+              }}
             />
 
             {/* Video (hero only) */}
