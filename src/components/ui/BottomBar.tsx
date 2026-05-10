@@ -7,20 +7,36 @@ interface Props {
 export default function BottomBar({ sectionName, sectionThumb, progress }: Props) {
   return (
     <div className="fixed bottom-0 inset-x-0 z-[998] pointer-events-none">
-      {/* Section pill */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-auto
-        flex items-center bg-black/75 backdrop-blur-xl border border-white/10
-        rounded-xl overflow-hidden min-w-[280px]">
+
+      {/* Pill — large, centré, gradient dark→transparent */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto
+        w-[min(860px,90vw)] flex items-center rounded-full overflow-hidden
+        border border-white/15"
+        style={{
+          background: 'linear-gradient(to right, rgba(10,20,30,0.88) 0%, rgba(20,35,50,0.70) 60%, rgba(30,50,65,0.55) 100%)',
+          backdropFilter: 'blur(18px)',
+        }}
+      >
+        {/* Thumbnail circulaire */}
         <img
           src={sectionThumb}
           alt=""
-          className="w-12 h-12 object-cover flex-shrink-0"
+          className="w-14 h-14 object-cover flex-shrink-0 rounded-full m-1.5"
         />
-        <span className="flex-1 px-4 text-sm font-light whitespace-nowrap">{sectionName}</span>
+
+        {/* Nom de section */}
+        <span className="flex-1 px-4 text-[15px] font-semibold text-white whitespace-nowrap">
+          {sectionName}
+        </span>
+
+        {/* Séparateur vertical */}
+        <div className="w-px h-7 bg-white/20 flex-shrink-0" />
+
+        {/* Learn more */}
         <a
           href="#"
-          className="px-4 h-12 flex items-center text-xs text-white/70
-            border-l border-white/10 hover:text-white transition-colors"
+          className="px-6 h-[60px] flex items-center text-sm text-white/75
+            hover:text-white transition-colors whitespace-nowrap font-light"
         >
           Learn more
         </a>
@@ -33,6 +49,7 @@ export default function BottomBar({ sectionName, sectionThumb, progress }: Props
           style={{ width: `${progress * 100}%` }}
         />
       </div>
+
     </div>
   )
 }

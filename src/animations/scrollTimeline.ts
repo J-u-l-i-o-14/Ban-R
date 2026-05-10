@@ -35,8 +35,13 @@ function addTransition(
   )
 
   // ── Dissolution particules (Neural Band uniquement) ────────
+  // fromTo explicite pour garantir 0 → 1 même lors du scrub
   if (dissolveProxy) {
-    tl.to(dissolveProxy, { value: 1, duration: 0.7, ease: E.scrub }, '<')
+    tl.fromTo(dissolveProxy,
+      { value: 0 },
+      { value: 1, duration: 0.7, ease: E.scrub },
+      '<'
+    )
   }
 
   // ── 4. IMAGE ENTRANTE + TEXTE ENTRANT en même temps ───────

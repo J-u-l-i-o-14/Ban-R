@@ -92,9 +92,9 @@ export default function ParticleDissolve() {
         const y = Math.round(pt.oy + pt.vy * SPREAD * p)
         if (x < 0 || x >= cw || y < 0 || y >= ch) continue
 
-        // Opacité au repos ~60%, disparaît progressivement pendant la dissolution
-        const baseOpacity    = 0.60
-        const particleOpacity = Math.max(0, baseOpacity - p * 1.4)
+        // Opacité au repos ~60%, dissolution complète à p=1
+        const baseOpacity     = 0.60
+        const particleOpacity = Math.max(0, baseOpacity * (1 - p))
         const i4 = (y * cw + x) * 4
         d[i4]     = pt.r
         d[i4 + 1] = pt.g
