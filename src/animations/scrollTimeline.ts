@@ -3,80 +3,119 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+const SCROLL_PER_SCENE = 1400
+
+/*
+ * LOGIQUE SCRUB BIDIRECTIONNEL
+ * ─────────────────────────────
+ * Scrub = GSAP joue la timeline en avant (scroll bas) et en arrière (scroll haut).
+ * Il suffit de définir la direction "vers le bas" :
+ *   - Scène qui part  : monte légèrement + blur + fade out
+ *   - Scène qui entre : monte depuis le bas + blur → net
+ *   - Texte qui part  : monte + blur out
+ *   - Texte qui entre : monte depuis le bas + blur → net
+ * En remontant, tout s'inverse automatiquement.
+ */
+
+function addTransition(
+  tl: gsap.core.Timeline,
+  sceneOut: HTMLElement,
+  sceneIn: HTMLElement,
+  textOut: HTMLElement | null,
+  textIn: HTMLElement | null
+) {
+  // ── Image sortante : fade simple, PAS de scale ni blur ─
+  tl.to(sceneOut, {
+    opacity: 0,
+    duration: 1,
+    ease: 'none',
+  })
+
+  // ── Image entrante : crossfade propre ─────────────────
+  tl.fromTo(
+    sceneIn,
+    { opacity: 0 },
+    { opacity: 1, duration: 1, ease: 'none' },
+    '<0.2'
+  )
+
+  // ── Texte sortant : 2 phases ──────────────────────────
+  // Phase 1 (70%) : monte proprement, pas de blur
+  // Phase 2 (30%) : blur explose + fade out en fin de course
+  if (textOut) {
+    tl.to(textOut,
+      { y: -22, opacity: 0.8, filter: 'blur(0px)', duration: 0.45, ease: 'none' },
+      '<'
+    )
+    tl.to(textOut,
+      { y: -44, opacity: 0,   filter: 'blur(14px)', duration: 0.25, ease: 'none' },
+      '>'
+    )
+  }
+
+  // ── Texte entrant : 2 phases ───────────────────────────
+  // Phase 1 (30%) : arrive du bas avec blur (vient de nulle part)
+  // Phase 2 (70%) : se stabilise, blur disparaît, montée propre
+  if (textIn) {
+    tl.fromTo(textIn,
+      { y: 50,  opacity: 0,   filter: 'blur(14px)' },
+      { y: 22,  opacity: 0.8, filter: 'blur(0px)',  duration: 0.3, ease: 'none' },
+      '<0.15'
+    )
+    tl.to(textIn,
+      { y: 0,   opacity: 1,   filter: 'blur(0px)',  duration: 0.45, ease: 'none' },
+      '>'
+    )
+  }
+}
+
 export function createScrollTimeline(
   container: HTMLElement,
   onSceneChange: (i: number) => void
 ) {
   const scenes = Array.from(container.querySelectorAll<HTMLElement>('[data-scene]'))
+  const texts  = Array.from(container.querySelectorAll<HTMLElement>('[data-scene-text]'))
+
   if (scenes.length === 0) return
 
-  // Toutes les scènes invisibles sauf la première
-  gsap.set(scenes, { opacity: 0, scale: 1, x: 0, y: 0 })
+  const n     = scenes.length
+  const total = (n - 1) * SCROLL_PER_SCENE
+
+  // ── Initialisation ────────────────────────────────────
+  // Toutes les scènes cachées sauf la première
+  gsap.set(scenes,    { opacity: 0 })
   gsap.set(scenes[0], { opacity: 1 })
 
-  const SCROLL_PER_SCENE = 1200 // px de scroll par scène
-  const total = (scenes.length - 1) * SCROLL_PER_SCENE
+  // Tous les textes cachés sauf le premier
+  gsap.set(texts,    { opacity: 0, y: 40, filter: 'blur(10px)' })
+  if (texts[0]) gsap.set(texts[0], { opacity: 1, y: 0, filter: 'blur(0px)' })
 
+  // ── Timeline pinned ───────────────────────────────────
   const tl = gsap.timeline({
     scrollTrigger: {
-      trigger: container,
-      start: 'top top',
-      end: `+=${total}`,
-      scrub: 1.5,
-      pin: true,
+      trigger:       container,
+      start:         'top top',
+      end:           `+=${total}`,
+      scrub:         2,          // valeur haute = plus fluide/cinématique
+      pin:           true,
       anticipatePin: 1,
       onUpdate(self) {
-        // Notifie la scène active pour bottom bar + dots
-        const idx = Math.min(
-          scenes.length - 1,
-          Math.floor(self.progress * scenes.length)
-        )
+        const idx = Math.min(n - 1, Math.floor(self.progress * n))
         onSceneChange(idx)
       },
     },
   })
 
-  // ── SCENE 1 → 2 ─────────────────────────────────
-  // Hero sort : scale up + fade out
-  tl.to(scenes[0], { scale: 1.08, opacity: 0, filter: 'blur(6px)', duration: 1, ease: 'power2.in' })
-  // Display entre : monte depuis le bas + dézoom
-  tl.fromTo(scenes[1],
-    { opacity: 0, y: '8%', scale: 1.04, filter: 'blur(8px)' },
-    { opacity: 1, y: '0%', scale: 1,    filter: 'blur(0px)', duration: 1, ease: 'power3.out' },
-    '<0.3'
-  )
-
-  // ── SCENE 2 → 3 ─────────────────────────────────
-  tl.to(scenes[1], { scale: 1.06, opacity: 0, filter: 'blur(6px)', duration: 1, ease: 'power2.in' })
-  tl.fromTo(scenes[2],
-    { opacity: 0, y: '10%', scale: 1.05, filter: 'blur(8px)' },
-    { opacity: 1, y: '0%',  scale: 1,    filter: 'blur(0px)', duration: 1, ease: 'power3.out' },
-    '<0.3'
-  )
-
-  // ── SCENE 3 → 4 (Neural Band : effet particules) ─
-  tl.to(scenes[2], { opacity: 0, y: '-6%', filter: 'blur(8px)', duration: 1, ease: 'power2.in' })
-  tl.fromTo(scenes[3],
-    { opacity: 0, scale: 1.1, filter: 'blur(10px)' },
-    { opacity: 1, scale: 1,   filter: 'blur(0px)', duration: 1, ease: 'power3.out' },
-    '<0.3'
-  )
-
-  // ── SCENE 4 → 5 (Uses : glisse depuis la droite) ─
-  tl.to(scenes[3], { opacity: 0, scale: 1.05, filter: 'blur(6px)', duration: 1, ease: 'power2.in' })
-  tl.fromTo(scenes[4],
-    { opacity: 0, x: '6%', filter: 'blur(8px)' },
-    { opacity: 1, x: '0%', filter: 'blur(0px)', duration: 1, ease: 'power3.out' },
-    '<0.3'
-  )
-
-  // ── SCENE 5 → 6 (Product : zoom in depuis grand) ─
-  tl.to(scenes[4], { opacity: 0, x: '-4%', filter: 'blur(6px)', duration: 1, ease: 'power2.in' })
-  tl.fromTo(scenes[5],
-    { opacity: 0, scale: 1.15, filter: 'blur(10px)' },
-    { opacity: 1, scale: 1,    filter: 'blur(0px)', duration: 1, ease: 'power3.out' },
-    '<0.3'
-  )
+  // ── Transitions scène par scène ───────────────────────
+  for (let i = 0; i < n - 1; i++) {
+    addTransition(
+      tl,
+      scenes[i],
+      scenes[i + 1],
+      texts[i]     ?? null,
+      texts[i + 1] ?? null  // ProductUI n'a pas de data-scene-text → null
+    )
+  }
 
   return tl
 }

@@ -16,28 +16,29 @@ export default function App() {
   useSmoothScroll()
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const [activeIdx, setActiveIdx] = useState(0)
+  const [activeIdx, setActiveIdx]       = useState(0)
   const [scrollProgress, setScrollProgress] = useState(0)
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const tl = createScrollTimeline(container, (idx) => {
-      setActiveIdx(idx)
-      // Calcul de la progression globale pour la barre de bas de page
-      const max = document.body.scrollHeight - window.innerHeight
-      if (max > 0) setScrollProgress(window.scrollY / max)
-    })
-
-    // Mise à jour progress bar au scroll
     const onScroll = () => {
       const max = document.body.scrollHeight - window.innerHeight
       if (max > 0) setScrollProgress(window.scrollY / max)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
 
+    // RAF garantit que le DOM React est entièrement rendu
+    const raf = requestAnimationFrame(() => {
+      createScrollTimeline(container, (idx) => {
+        setActiveIdx(idx)
+        onScroll()
+      })
+    })
+
     return () => {
+      cancelAnimationFrame(raf)
       killScrollTimeline()
       window.removeEventListener('scroll', onScroll)
     }
@@ -46,7 +47,7 @@ export default function App() {
   const scrollToScene = (i: number) => {
     const container = containerRef.current
     if (!container) return
-    const SCROLL_PER_SCENE = 1200
+    const SCROLL_PER_SCENE = 1400
     const top = container.offsetTop + i * SCROLL_PER_SCENE
     window.scrollTo({ top, behavior: 'smooth' })
   }
@@ -57,7 +58,6 @@ export default function App() {
     <>
       <Navbar />
 
-      {/* ── SINGLE PINNED SCROLL UNIVERSE ────────── */}
       <div
         ref={containerRef}
         id="scroll-container"
@@ -67,11 +67,9 @@ export default function App() {
         <SceneStage />
       </div>
 
-      {/* ── SPECS + FOOTER (scroll normal) ──────── */}
       <SpecsSection />
       <Footer />
 
-      {/* ── UI overlay ──────────────────────────── */}
       <BottomBar
         sectionName={active?.name ?? ''}
         sectionThumb={active?.image ?? ''}

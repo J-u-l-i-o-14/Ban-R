@@ -73,7 +73,10 @@ function Scene({ section, index }: SceneProps) {
 
 function SceneText({ lines, body }: { lines: string[]; body?: string }) {
   return (
-    <div className="absolute bottom-0 left-0 px-14 pb-28 max-w-[580px]">
+    <div
+      data-scene-text
+      className="absolute bottom-0 left-0 px-14 pb-28 max-w-[580px]"
+    >
       <h1 className="text-[clamp(36px,4.5vw,62px)] font-light leading-[1.1] mb-4">
         {lines.map((line, i) => <span key={i} className="block">{line}</span>)}
       </h1>
