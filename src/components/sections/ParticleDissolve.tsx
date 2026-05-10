@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { neuralProgress } from '../../state'
 
-const SAMPLE = 5     // 1 particule tous les 5px
-const SPREAD = 480   // dispersion max en pixels (plus organique)
+const SAMPLE = 4     // 1 particule tous les 4px (plus dense)
+const SPREAD = 500   // dispersion max en pixels
 
 type Particle = {
   ox: number; oy: number
@@ -92,14 +92,21 @@ export default function ParticleDissolve() {
         const y = Math.round(pt.oy + pt.vy * SPREAD * p)
         if (x < 0 || x >= cw || y < 0 || y >= ch) continue
 
-        // Opacité au repos ~60%, dissolution complète à p=1
-        const baseOpacity     = 0.60
-        const particleOpacity = Math.max(0, baseOpacity * (1 - p))
-        const i4 = (y * cw + x) * 4
-        d[i4]     = pt.r
-        d[i4 + 1] = pt.g
-        d[i4 + 2] = pt.b
-        d[i4 + 3] = Math.round(particleOpacity * 255)
+        // Opacité : au repos 60%, monte à 100% pendant la dissolution, puis → 0
+        const effectiveBase   = 0.60 + 0.40 * Math.min(1, p * 6)
+        const particleOpacity = Math.max(0, effectiveBase * (1 - p))
+        const alpha           = Math.round(particleOpacity * 255)
+
+        // Particules 2×2px pour être bien visibles
+        for (let dy = 0; dy < 2 && y + dy < ch; dy++) {
+          for (let dx = 0; dx < 2 && x + dx < cw; dx++) {
+            const i4 = ((y + dy) * cw + (x + dx)) * 4
+            d[i4]     = pt.r
+            d[i4 + 1] = pt.g
+            d[i4 + 2] = pt.b
+            d[i4 + 3] = alpha
+          }
+        }
       }
 
       ctx.clearRect(0, 0, cw, ch)
