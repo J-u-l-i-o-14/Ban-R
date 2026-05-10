@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { neuralProgress } from '../../state'
 
 const SAMPLE = 5     // 1 particule tous les 5px
-const SPREAD = 320   // dispersion max en pixels
+const SPREAD = 480   // dispersion max en pixels (plus organique)
 
 type Particle = {
   ox: number; oy: number
@@ -53,12 +53,14 @@ export default function ParticleDissolve() {
             const idx = (y * cw + x) * 4
             if (data[idx + 3] < 10) continue
 
+            // Direction organique : biais vers le haut + légère rotation
             const angle = Math.random() * Math.PI * 2
-            const speed = 0.4 + Math.random() * 0.6
+            const speed = 0.3 + Math.random() * 0.8  // vitesses variées
+            const drift = (Math.random() - 0.5) * 0.4 // micro-dérive latérale
             particles.current.push({
               ox: x, oy: y,
-              vx: Math.cos(angle) * speed,
-              vy: Math.sin(angle) * speed - 0.28,
+              vx: Math.cos(angle) * speed + drift,
+              vy: Math.sin(angle) * speed - 0.35,     // biais haut plus fort
               r: data[idx], g: data[idx + 1], b: data[idx + 2],
             })
           }
@@ -90,7 +92,9 @@ export default function ParticleDissolve() {
         const y = Math.round(pt.oy + pt.vy * SPREAD * p)
         if (x < 0 || x >= cw || y < 0 || y >= ch) continue
 
-        const particleOpacity = Math.max(0, 1 - p * 1.5)
+        // Opacité au repos ~60%, disparaît progressivement pendant la dissolution
+        const baseOpacity    = 0.60
+        const particleOpacity = Math.max(0, baseOpacity - p * 1.4)
         const i4 = (y * cw + x) * 4
         d[i4]     = pt.r
         d[i4 + 1] = pt.g
