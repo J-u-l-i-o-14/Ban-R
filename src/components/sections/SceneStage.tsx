@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import ParticleCanvas from '../ui/ParticleCanvas'
+import ParticleDissolve from './ParticleDissolve'
 import UsesPanel from './UsesPanel'
 import ProductUI from './ProductUI'
 import { SECTIONS } from '../../data/content'
@@ -41,12 +42,6 @@ function Scene({ section, index }: SceneProps) {
         </video>
       )}
 
-      {/* Particle canvas (Neural Band) */}
-      {'particles' in section && section.particles && (
-        <div className="absolute inset-0 z-[2]">
-          <ParticleCanvas />
-        </div>
-      )}
 
       {/* Bottom gradient */}
       <div
@@ -122,22 +117,9 @@ export default function SceneStage() {
         <Scene key={section.id} section={section} index={i} />
       ))}
 
-      {/* Water overlay — couche de distorsion visible pendant les transitions */}
-      <div
-        id="water-overlay"
-        aria-hidden="true"
-        style={{
-          position:      'absolute',
-          inset:         '-10%',
-          width:         '120%',
-          height:        '120%',
-          background:    'linear-gradient(135deg, rgba(80,140,190,.18) 0%, rgba(60,120,170,.12) 50%, rgba(100,160,200,.16) 100%)',
-          filter:        'url(#water)',
-          pointerEvents: 'none',
-          zIndex:        20,
-          opacity:       0,
-        }}
-      />
+      {/* Canvas particules HORS de toute scène → pas affecté par le fade de la scène
+          z-index 4 = même niveau que neural (index 3+1=4), après dans le DOM → dessus */}
+      <ParticleDissolve />
     </>
   )
 }
