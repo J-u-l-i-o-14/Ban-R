@@ -1,14 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useSmoothScroll } from './hooks/useSmoothScroll'
 import { useScrollProgress } from './hooks/useScrollProgress'
 import { SECTIONS } from './data/content'
 
 import Navbar       from './components/layout/Navbar'
 import Footer       from './components/layout/Footer'
-import PinnedScene  from './components/sections/PinnedScene'
-import SceneText    from './components/sections/SceneText'
-import UsesPanel    from './components/sections/UsesPanel'
-import ProductUI    from './components/sections/ProductUI'
+import ScrollScene  from './components/sections/ScrollScene'
 import SpecsSection from './components/sections/SpecsSection'
 import BottomBar    from './components/ui/BottomBar'
 import SideDots     from './components/ui/SideDots'
@@ -17,29 +14,16 @@ import './index.css'
 
 export default function App() {
   useSmoothScroll()
-  const progress = useScrollProgress()
-
-  const [activeIdx, setActiveIdx]   = useState(0)
+  const progress   = useScrollProgress()
+  const [activeIdx, setActiveIdx] = useState(0)
   const wrapperRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  /* Track active section for bottom bar + side dots */
-  useEffect(() => {
-    const onScroll = () => {
-      const vh = window.innerHeight
-      let idx = 0
-      wrapperRefs.current.forEach((el, i) => {
-        if (!el) return
-        const rect = el.getBoundingClientRect()
-        if (rect.top <= vh * 0.5 && rect.bottom >= vh * 0.5) idx = i
-      })
-      setActiveIdx(idx)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
   const scrollTo = (i: number) => {
-    wrapperRefs.current[i]?.scrollIntoView({ behavior: 'smooth' })
+    // Scroll to the scroll-scene wrapper proportionally
+    const scene = document.getElementById('scroll-stage-wrapper')
+    if (!scene) return
+    const top = scene.offsetTop + (i / (SECTIONS.length - 1)) * (scene.offsetHeight - window.innerHeight)
+    window.scrollTo({ top, behavior: 'smooth' })
   }
 
   const active = SECTIONS[activeIdx]
@@ -48,50 +32,25 @@ export default function App() {
     <>
       <Navbar />
 
-      {/* ── PINNED SECTIONS ───────────────────────────── */}
-      {SECTIONS.map((section, i) => (
-        <div
-          key={section.id}
-          ref={el => { wrapperRefs.current[i] = el }}
-        >
-          <PinnedScene
-            id={section.id}
-            bgImage={section.image}
-            bgVideo={'video' in section ? section.video : undefined}
-            zIndex={i + 1}
-            particles={'particles' in section && section.particles}
-            data-name={section.name}
-            data-thumb={section.image}
-          >
-            {'product' in section && section.product ? (
-              <ProductUI />
-            ) : (
-              <>
-                <SceneText
-                  lines={section.headline as string[]}
-                  body={'body' in section ? section.body : undefined}
-                />
-                {'useCards' in section && section.useCards && <UsesPanel />}
-              </>
-            )}
-          </PinnedScene>
-        </div>
-      ))}
+      {/* ── ONE PINNED SCROLL UNIVERSE ─────────────────── */}
+      <div id="scroll-stage-wrapper">
+        <ScrollScene onSectionChange={setActiveIdx} />
+      </div>
 
-      {/* ── SPECS ─────────────────────────────────────── */}
+      {/* ── SPECS (scroll normal après le stage) ───────── */}
       <SpecsSection />
 
-      {/* ── FOOTER ────────────────────────────────────── */}
+      {/* ── FOOTER ─────────────────────────────────────── */}
       <Footer />
 
-      {/* ── BOTTOM BAR ────────────────────────────────── */}
+      {/* ── BOTTOM BAR ─────────────────────────────────── */}
       <BottomBar
         sectionName={active?.name ?? ''}
         sectionThumb={active?.image ?? ''}
         progress={progress}
       />
 
-      {/* ── SIDE DOTS ─────────────────────────────────── */}
+      {/* ── SIDE DOTS ──────────────────────────────────── */}
       <SideDots
         count={SECTIONS.length}
         active={activeIdx}
