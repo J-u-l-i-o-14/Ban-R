@@ -74,6 +74,7 @@ export default function App() {
         sectionName={active?.name ?? ''}
         sectionThumb={active?.image ?? ''}
         progress={scrollProgress}
+        hidden={activeIdx === SECTIONS.length - 1}
       />
 
       <SideDots

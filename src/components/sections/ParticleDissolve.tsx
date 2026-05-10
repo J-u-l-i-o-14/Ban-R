@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { neuralProgress } from '../../state'
+import { neuralProgress, globalDissolve } from '../../state'
 
 const SAMPLE = 4     // 1 particule tous les 4px (plus dense)
 const SPREAD = 500   // dispersion max en pixels
@@ -71,7 +71,8 @@ export default function ParticleDissolve() {
     }
 
     const render = () => {
-      const p   = neuralProgress.value
+      // Combine neural (full) + global (subtle) dissolve
+      const p   = Math.max(neuralProgress.value, globalDissolve.value)
       const pts = particles.current
       const cw  = canvas.width
       const ch  = canvas.height

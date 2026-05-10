@@ -1,7 +1,7 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { E } from './easing'
-import { neuralProgress } from '../state'
+import { neuralProgress, globalDissolve } from '../state'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -34,13 +34,24 @@ function addTransition(
     textOut ? '<0.1' : '>'
   )
 
-  // ── Dissolution particules (Neural Band uniquement) ────────
-  // fromTo explicite pour garantir 0 → 1 même lors du scrub
+  // ── Dissolution particules ────────────────────────────────
   if (dissolveProxy) {
+    // Neural Band : dissolution complète 0 → 1
     tl.fromTo(dissolveProxy,
       { value: 0 },
       { value: 1, duration: 0.7, ease: E.scrub },
       '<'
+    )
+  } else {
+    // Autres sections : scatter subtil 0 → 0.18 → 0
+    tl.fromTo(globalDissolve,
+      { value: 0   },
+      { value: 0.18, duration: 0.35, ease: E.scrub },
+      '<'
+    )
+    tl.to(globalDissolve,
+      { value: 0, duration: 0.35, ease: E.scrub },
+      '>'
     )
   }
 
