@@ -118,19 +118,26 @@ function SceneText({ lines, body }: { lines: string[]; body?: string }) {
 export default function SceneStage() {
   return (
     <>
-      {/* SVG water distortion */}
-      <svg className="absolute w-0 h-0" aria-hidden="true">
-        <defs>
-          <filter id="water">
-            <feTurbulence type="fractalNoise" baseFrequency="0.018 0.025" numOctaves="3" result="noise"/>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G"/>
-          </filter>
-        </defs>
-      </svg>
-
       {SECTIONS.map((section, i) => (
         <Scene key={section.id} section={section} index={i} />
       ))}
+
+      {/* Water overlay — couche de distorsion visible pendant les transitions */}
+      <div
+        id="water-overlay"
+        aria-hidden="true"
+        style={{
+          position:      'absolute',
+          inset:         '-10%',
+          width:         '120%',
+          height:        '120%',
+          background:    'linear-gradient(135deg, rgba(80,140,190,.18) 0%, rgba(60,120,170,.12) 50%, rgba(100,160,200,.16) 100%)',
+          filter:        'url(#water)',
+          pointerEvents: 'none',
+          zIndex:        20,
+          opacity:       0,
+        }}
+      />
     </>
   )
 }
