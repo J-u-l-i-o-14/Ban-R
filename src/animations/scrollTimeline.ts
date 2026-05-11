@@ -42,17 +42,6 @@ function addTransition(
       { value: 1, duration: 0.7, ease: E.scrub },
       '<'
     )
-  } else {
-    // Autres sections : scatter subtil 0 → 0.18 → 0
-    tl.fromTo(globalDissolve,
-      { value: 0   },
-      { value: 0.18, duration: 0.35, ease: E.scrub },
-      '<'
-    )
-    tl.to(globalDissolve,
-      { value: 0, duration: 0.35, ease: E.scrub },
-      '>'
-    )
   }
 
   // ── 4. IMAGE ENTRANTE + TEXTE ENTRANT en même temps ───────

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { neuralProgress, globalDissolve } from '../../state'
+import { neuralProgress } from '../../state'
 
 const SAMPLE = 4     // 1 particule tous les 4px (plus dense)
 const SPREAD = 500   // dispersion max en pixels
@@ -13,15 +13,15 @@ type Particle = {
 export default function ParticleDissolve() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particles = useRef<Particle[]>([])
-  const rafRef    = useRef<number>(0)
-  const readyRef  = useRef(false)
+  const rafRef = useRef<number>(0)
+  const readyRef = useRef(false)
 
   useEffect(() => {
     const canvas = canvasRef.current!
-    const ctx    = canvas.getContext('2d')!
+    const ctx = canvas.getContext('2d')!
 
     const resize = () => {
-      canvas.width  = canvas.offsetWidth  || window.innerWidth
+      canvas.width = canvas.offsetWidth || window.innerWidth
       canvas.height = canvas.offsetHeight || window.innerHeight
       if (readyRef.current) buildParticles()
     }
@@ -30,19 +30,19 @@ export default function ParticleDissolve() {
       const cw = canvas.width
       const ch = canvas.height
       const img = new Image()
-      img.src   = '/nb.png'
+      img.src = '/nb.png'
 
       img.onload = () => {
         const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight)
-        const dw = img.naturalWidth  * scale
+        const dw = img.naturalWidth * scale
         const dh = img.naturalHeight * scale
         const dx = (cw - dw) / 2
         const dy = (ch - dh) / 2
 
-        const off  = document.createElement('canvas')
-        off.width  = cw
+        const off = document.createElement('canvas')
+        off.width = cw
         off.height = ch
-        const oc   = off.getContext('2d')!
+        const oc = off.getContext('2d')!
         oc.drawImage(img, dx, dy, dw, dh)
 
         const data = oc.getImageData(0, 0, cw, ch).data
@@ -71,11 +71,10 @@ export default function ParticleDissolve() {
     }
 
     const render = () => {
-      // Combine neural (full) + global (subtle) dissolve
-      const p   = Math.max(neuralProgress.value, globalDissolve.value)
+      const p = neuralProgress.value
       const pts = particles.current
-      const cw  = canvas.width
-      const ch  = canvas.height
+      const cw = canvas.width
+      const ch = canvas.height
 
       // Opacité du canvas lui-même : visible à p=0, disparaît à p>0.9
       canvas.style.opacity = p > 0.95 ? '0' : '1'
@@ -86,23 +85,32 @@ export default function ParticleDissolve() {
       }
 
       const id = ctx.createImageData(cw, ch)
-      const d  = id.data
+      const d = id.data
+
+      // Zone texte à exclure (bas-gauche : pb-28 px-14 max-w-[580px])
+      const textX = cw * 0.44   // limite droite de la zone texte (~580px sur 1920)
+      const textY = ch * 0.50   // limite haute de la zone texte (moitié basse)
 
       for (const pt of pts) {
         const x = Math.round(pt.ox + pt.vx * SPREAD * p)
         const y = Math.round(pt.oy + pt.vy * SPREAD * p)
         if (x < 0 || x >= cw || y < 0 || y >= ch) continue
 
-        // Opacité : au repos 60%, monte à 100% pendant la dissolution, puis → 0
-        const effectiveBase   = 0.60 + 0.40 * Math.min(1, p * 6)
+        // Exclure la zone texte (bas-gauche) du rendu
+        if (pt.ox < textX && pt.oy > textY) continue
+
+        // Légèrement visible sur toutes les sections (0.18),
+        // monte à 1.0 uniquement pendant la dissolution Neural Band
+        const baseOpacity = 0.19
+        const effectiveBase = baseOpacity + (1.0 - baseOpacity) * Math.min(1, p * 6)
         const particleOpacity = Math.max(0, effectiveBase * (1 - p))
-        const alpha           = Math.round(particleOpacity * 255)
+        const alpha = Math.round(particleOpacity * 255)
 
         // Particules 2×2px pour être bien visibles
         for (let dy = 0; dy < 2 && y + dy < ch; dy++) {
           for (let dx = 0; dx < 2 && x + dx < cw; dx++) {
             const i4 = ((y + dy) * cw + (x + dx)) * 4
-            d[i4]     = pt.r
+            d[i4] = pt.r
             d[i4 + 1] = pt.g
             d[i4 + 2] = pt.b
             d[i4 + 3] = alpha
